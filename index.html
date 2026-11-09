@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="JARVIS - your personal voice and text assistant">
+  <link rel="manifest" href="manifest.json">
+  <title>JARVIS | Personal Assistant</title>
+  <style>
+    :root{color-scheme:dark;--bg:#050b14;--panel:#0b1828;--line:#17334b;--cyan:#56d9ff;--muted:#8da7bc}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 50% 0%,#102a40 0%,var(--bg) 55%);color:#eaf8ff;font:16px system-ui, sans-serif;min-height:100vh}
+    .app{max-width:760px;margin:auto;padding:20px 16px 28px;display:flex;flex-direction:column;min-height:100vh}
+    header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:5px 0 16px}
+    .brand{font-weight:800;letter-spacing:.22em;color:var(--cyan)} .status{font-size:12px;color:#9be9c2}
+    .hero{text-align:center;padding:28px 0 20px}
+    .orb{width:142px;height:142px;margin:0 auto 15px;border-radius:50%;border:1px solid #3cbde8;display:grid;place-items:center;position:relative;background:radial-gradient(circle,#16445e 0%,#0a1c2d 48%,#07111f 72%);box-shadow:0 0 28px #24b9e855,inset 0 0 28px #24b9e833}
+    .orb:before,.orb:after{content:"";position:absolute;inset:-10px;border:1px solid #3cbde866;border-radius:50%;animation:pulse 3s infinite}
+    .orb:after{inset:-20px;animation-delay:1.5s}
+    .orb span{font-size:36px;color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
+    @keyframes pulse{0%{transform:scale(.94);opacity:.8}100%{transform:scale(1.12);opacity:0}}
+    h1{font-size:22px;letter-spacing:.18em;margin:10px 0 5px} .sub{color:var(--muted);font-size:13px}
+    .chat{background:#071321cc;border:1px solid var(--line);border-radius:18px;padding:14px;min-height:220px;max-height:42vh;overflow:auto}
+    .msg{padding:11px 13px;border-radius:14px;margin:8px 0;max-width:90%;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+    .bot{background:#10283b;border:1px solid #1b4964;margin-right:auto}.user{background:#123c52;border:1px solid #23617c;margin-left:auto}
+    .who{font-size:10px;letter-spacing:.13em;color:var(--cyan);display:block;margin-bottom:4px}
+    .controls{margin-top:14px;display:flex;gap:9px}
+    input{min-width:0;flex:1;background:#091725;border:1px solid var(--line);border-radius:13px;padding:14px;color:white;font:inherit;outline:none}
+    input:focus{border-color:var(--cyan)}
+    button{border:1px solid #28799b;background:#0c2a3d;color:#eafaff;border-radius:13px;padding:12px 15px;font:inherit;cursor:pointer}
+    button:active{transform:scale(.98)} .send{background:#126184}
+    .microw{display:flex;justify-content:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .mic{border-radius:30px;min-width:145px;background:linear-gradient(135deg,#0d6789,#12344c);border-color:#47c8f4}
+    .mic.listening{background:#7a2637;border-color:#ff8b9b}
+    .small{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+    footer{margin-top:auto;padding-top:18px;text-align:center;color:#617f95;font-size:11px}
+    @media(min-width:600px){.app{padding-top:26px}.hero{padding:34px 0 26px}.orb{width:160px;height:160px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header><div class="brand">J.A.R.V.I.S.</div><div class="status">● SYSTEM READY</div></header>
+  <section class="hero">
+    <div class="orb" id="orb"><span>J</span></div>
+    <h1>AT YOUR SERVICE</h1>
+    <div class="sub" id="state">Voice and text interface initialized</div>
+  </section>
+  <main class="chat" id="chat" aria-live="polite">
+    <div class="msg bot"><span class="who">JARVIS</span>Good day. I am JARVIS, your personal assistant interface. You can type a message or use the microphone. My first build is running in local demo mode.</div>
+  </main>
+  <form class="controls" id="form">
+    <input id="message" autocomplete="off" placeholder="Type a message to JARVIS…" aria-label="Message">
+    <button class="send" type="submit">Send</button>
+  </form>
+  <div class="microw">
+    <button class="mic" id="mic" type="button">🎙 Speak to JARVIS</button>
+    <button id="stop" type="button">■ Stop voice</button>
+  </div>
+  <p class="small" id="notice">Voice recognition requires a supported browser and microphone permission. AI cloud intelligence will be connected in the next stage.</p>
+  <footer>JARVIS ANDROID STARTER · BUILD 0.1 · LOCAL DEMO</footer>
+</div>
+<script>
+const chat=document.getElementById('chat'), form=document.getElementById('form');
+const input=document.getElementById('message'), state=document.getElementById('state');
+const mic=document.getElementById('mic');
+function addMessage(text,who){
+  const el=document.createElement('div'); el.className='msg '+(who==='You'?'user':'bot');
+  const label=document.createElement('span'); label.className='who'; label.textContent=who.toUpperCase();
+  const body=document.createElement('span'); body.textContent=text;
+  el.append(label,body); chat.appendChild(el); chat.scrollTop=chat.scrollHeight;
+}
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(text);
+  utterance.rate=1; utterance.pitch=.92; utterance.volume=1;
+  window.speechSynthesis.speak(utterance);
+}
+function replyTo(text){
+  const q=text.toLowerCase().trim(); let answer;
+  if(/^(hi|hello|hey)\b/.test(q)) answer='Hello. I am online and ready to assist. What shall we work on?';
+  else if(q.includes('your name')) answer='I am JARVIS: Just A Rather Very Intelligent System.';
+  else if(q.includes('time')) answer='The time on this device is '+new Date().toLocaleTimeString()+'.';
+  else if(q.includes('date')) answer='Today on this device is '+new Date().toLocaleDateString()+'.';
+  else if(q.includes('help')) answer='I can currently greet you, tell the device time and date, and demonstrate voice and text interaction. My AI brain and device integrations are planned for the next stages.';
+  else answer='I received your message: "'+text+'". This starter is in local demo mode, so it does not yet have a connected AI model. The next stage will give me real conversational intelligence.';
+  addMessage(answer,'JARVIS'); speak(answer);
+}
+form.addEventListener('submit',e=>{e.preventDefault();const text=input.value.trim();if(!text)return;addMessage(text,'You');input.value='';replyTo(text);});
+document.getElementById('stop').addEventListener('click',()=>{if('speechSynthesis'in window)window.speechSynthesis.cancel();state.textContent='Speech stopped';});
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null;
+if(SpeechRecognition){
+  recognition=new SpeechRecognition(); recognition.lang='en-US'; recognition.interimResults=false; recognition.continuous=false;
+  recognition.onstart=()=>{mic.classList.add('listening');mic.textContent='Listening…';state.textContent='Listening for your command';};
+  recognition.onresult=e=>{const text=e.results[0][0].transcript;input.value=text;addMessage(text,'You');replyTo(text);};
+  recognition.onerror=e=>{state.textContent='Voice error: '+e.error;};
+  recognition.onend=()=>{mic.classList.remove('listening');mic.textContent='🎙 Speak to JARVIS';if(!state.textContent.startsWith('Voice error'))state.textContent='Voice and text interface ready';};
+  mic.addEventListener('click',()=>{try{recognition.start();}catch(e){state.textContent='Microphone is already active';}});
+}else{
+  mic.disabled=true;mic.textContent='Voice unavailable in this browser';
+  document.getElementById('notice').textContent='This browser does not expose speech recognition. Text chat still works; try an up-to-date Chrome browser on Android.';
+}
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
